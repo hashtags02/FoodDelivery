@@ -35,6 +35,7 @@ import PunjabiDhabaPage from "./components/PunjabiDhabaPage";
 import RajasthaniRasoiPage from "./components/RajasthaniRasoiPage";
 import TheChaatChaskaPage from "./components/TheChaatChaskaPage";
 import MomosHutPage from "./components/MomosHutPage";
+import SearchResults from "./pages/SearchResults";
 
 import "./App.css";
 
@@ -81,6 +82,9 @@ function App() {
             <Route path="/rajasthani-rasoi" element={<RajasthaniRasoiPage />} />
             <Route path="/the-chaat-chaska" element={<TheChaatChaskaPage />} />
             <Route path="/momos-hut" element={<MomosHutPage />} />
+
+            {/* 🔍 Search Route */}
+            <Route path="/search" element={<SearchResults />} />
 
             {/* 🔐 Auth Routes */}
             <Route path="/login" element={<Login />} />

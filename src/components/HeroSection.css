@@ -110,6 +110,20 @@
   color: #ff8008;
 }
 
+/* Hero Search Styles */
+.hero-search {
+  margin: 2rem 0;
+  max-width: 600px;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .hero-search {
+    margin: 1.5rem 0;
+    max-width: 90%;
+  }
+}
+
 .navbar-icons {
   display: flex;
   align-items: center;
