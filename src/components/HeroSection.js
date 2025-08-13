@@ -2,6 +2,7 @@ import React, { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { CartContext } from "../context/CartContext";
+import GlobalSearch from './GlobalSearch';
 import './HeroSection.css';
 
 function HeroSection() {
@@ -115,6 +116,9 @@ function HeroSection() {
           Craving something delicious?<br />
           Order from local restaurants near you
         </p>
+        <div className="hero-search">
+          <GlobalSearch placeholder="Search for restaurants, dishes, or cuisines..." />
+        </div>
         <button className="order-btn">Order Now</button>
       </div>
     </section>

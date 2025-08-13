@@ -137,6 +137,25 @@ html, body {
   gap: 8px;
 }
 
+.no-menu-results {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 2px dashed #ddd;
+}
+
+.no-menu-results p {
+  margin: 8px 0;
+  font-size: 16px;
+}
+
+.no-menu-results p:first-child {
+  font-weight: 600;
+  color: #333;
+}
+
 .rating-badge {
   background: #388e3c;
   color: #fff;
