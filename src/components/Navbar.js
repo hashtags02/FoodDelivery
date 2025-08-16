@@ -50,7 +50,8 @@ function Navbar() {
     <nav className="navbar">
       <div className="navbar-logo">CraveCart</div>
       <ul className="navbar-links">
-        <li>Home</li>
+        <li onClick={() => navigate("/")}>Home</li>
+        <li onClick={() => navigate("/track")}>Track Order</li>
         <li>About us</li>
         <li>Help/Support</li>
       </ul>
@@ -77,6 +78,9 @@ function Navbar() {
               <ul className="menu-items">
                 <li onClick={() => { navigate("/dashboard"); setIsMenuOpen(false); }}>
                   Dashboard
+                </li>
+                <li onClick={() => { navigate("/track"); setIsMenuOpen(false); }}>
+                  Track Order
                 </li>
                 <li onClick={() => { navigate("/cart"); setIsMenuOpen(false); }}>
                   Cart
