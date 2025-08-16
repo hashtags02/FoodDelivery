@@ -160,10 +160,16 @@ orderSchema.pre('save', async function(next) {
   next();
 });
 
-// Calculate estimated delivery time based on distance
+// Calculate estimated delivery time based on distance (optimized for Vadodara city)
 orderSchema.methods.calculateEstimatedDeliveryTime = function() {
-  const baseTime = 30; // 30 minutes base delivery time
+  const baseTime = 25; // 25 minutes base delivery time for Vadodara
   const prepTime = 15; // 15 minutes preparation time
+  
+  // Vadodara city center coordinates for reference
+  const vadodaraCenter = {
+    latitude: 22.3072,
+    longitude: 73.1812
+  };
   
   if (this.deliveryAddress.coordinates && this.restaurantLocation) {
     const distance = this.calculateDistance(
@@ -173,14 +179,42 @@ orderSchema.methods.calculateEstimatedDeliveryTime = function() {
       this.deliveryAddress.coordinates.longitude
     );
     
-    // Add 2 minutes per km
-    const additionalTime = Math.ceil(distance) * 2;
+    // Vadodara traffic considerations: 1.5 minutes per km during peak hours
+    const trafficMultiplier = this.isPeakHour() ? 1.5 : 1;
+    const additionalTime = Math.ceil(distance) * 2 * trafficMultiplier;
     const totalTime = prepTime + baseTime + additionalTime;
     
-    this.tracking.estimatedDeliveryTime = new Date(Date.now() + totalTime * 60000);
+    // Cap maximum delivery time for Vadodara city limits (max 60 minutes)
+    const finalTime = Math.min(totalTime, 60);
+    
+    this.tracking.estimatedDeliveryTime = new Date(Date.now() + finalTime * 60000);
   } else {
     this.tracking.estimatedDeliveryTime = new Date(Date.now() + (baseTime + prepTime) * 60000);
   }
+};
+
+// Check if current time is peak hour in Vadodara (12-2 PM, 7-9 PM IST)
+orderSchema.methods.isPeakHour = function() {
+  const now = new Date();
+  const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000)); // Convert to IST
+  const hour = istTime.getHours();
+  
+  return (hour >= 12 && hour <= 14) || (hour >= 19 && hour <= 21);
+};
+
+// Validate if delivery address is within Vadodara city limits
+orderSchema.methods.isWithinVadodaraLimits = function(latitude, longitude) {
+  const vadodaraBounds = {
+    north: 22.4000,
+    south: 22.2000,
+    east: 73.3000,
+    west: 73.0500
+  };
+  
+  return latitude >= vadodaraBounds.south && 
+         latitude <= vadodaraBounds.north && 
+         longitude >= vadodaraBounds.west && 
+         longitude <= vadodaraBounds.east;
 };
 
 // Calculate distance between two coordinates using Haversine formula
