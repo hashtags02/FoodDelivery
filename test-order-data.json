@@ -1,0 +1,36 @@
+{
+  "orderId": "ORD1234567890",
+  "status": "out_for_delivery",
+  "restaurant": {
+    "name": "Vadodara Delights",
+    "location": {
+      "latitude": 22.3072,
+      "longitude": 73.1812
+    },
+    "address": "Sayajigunj, Vadodara",
+    "phone": "+91 265 123 4567"
+  },
+  "deliveryAddress": {
+    "street": "Alkapuri Society, Block A",
+    "city": "Vadodara",
+    "coordinates": {
+      "latitude": 22.295,
+      "longitude": 73.202
+    }
+  },
+  "driver": {
+    "name": "Rahul Patel",
+    "phone": "+91 98765 43210",
+    "vehicleNumber": "GJ-06-AB-1234",
+    "rating": 4.8
+  },
+  "tracking": {
+    "currentLocation": {
+      "latitude": 22.301,
+      "longitude": 73.19,
+      "timestamp": "2025-08-16T15:12:47.020Z"
+    },
+    "estimatedTimeRemaining": 15,
+    "distanceRemaining": "2.3"
+  }
+}
