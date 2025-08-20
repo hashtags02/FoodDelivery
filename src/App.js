@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext"; // ✅ Add CartProvider import
 
@@ -8,6 +8,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Otp from "./pages/Otp";
 import Dashboard from "./pages/Dashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import TrackingPage from "./pages/TrackingPage";
 
 // ✅ Components (moved under /components)
@@ -24,6 +25,7 @@ import FoodGalleryRow from "./components/FoodGalleryRow";
 import KeyHighlightsSection from "./components/KeyHighlightsSection";
 import FooterSection from "./components/FooterSection";
 import TestAddToCart from "./components/TestAddToCart";
+import TestAdminAccess from "./components/TestAdminAccess";
 
 import FoodCategorySection from "./components/FoodCategorySection";
 import AllDishesPage from "./components/AllDishesPage";
@@ -41,6 +43,46 @@ import TheChaatChaskaPage from "./components/TheChaatChaskaPage";
 import MomosHutPage from "./components/MomosHutPage";
 
 import "./App.css";
+
+// Protected Route Component for Role-based Access
+const ProtectedRoute = ({ children, requiredRole, fallbackPath = "/" }) => {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+  
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  if (requiredRole && user.role !== requiredRole) {
+    return <Navigate to={fallbackPath} replace />;
+  }
+  
+  return children;
+};
+
+// Role-based Dashboard Redirect Component
+const DashboardRedirect = () => {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+  
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  // Redirect based on user role
+  if (user.role === 'admin') {
+    return <Navigate to="/admin" replace />;
+  }
+  
+  // Default to regular dashboard for other roles
+  return <Navigate to="/dashboard" replace />;
+};
 
 function LandingPage() {
   return (
@@ -80,6 +122,9 @@ function App() {
               <Route path="/categories" element={<FoodCategorySection />} />
               <Route path="/all-dishes" element={<AllDishesPage />} />
               <Route path="/cart" element={<CartPage />} />
+              
+              {/* 🧪 Test Routes */}
+              <Route path="/test-admin" element={<TestAdminAccess />} />
 
               {/* 🍴 Restaurant Pages */}
               <Route path="/old-school-eatery" element={<OldSchoolEateryPage />} />
@@ -101,7 +146,19 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/otp" element={<Otp />} />
-              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/dashboard" element={<DashboardRedirect />} />
+              <Route path="/user-dashboard" element={
+                <ProtectedRoute requiredRole="user">
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              
+              {/* 👑 Admin Routes */}
+              <Route path="/admin" element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminDashboard />
+                </ProtectedRoute>
+              } />
             </Routes>
           </div>
         </Router>
