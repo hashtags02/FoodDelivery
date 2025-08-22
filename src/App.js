@@ -26,6 +26,8 @@ import KeyHighlightsSection from "./components/KeyHighlightsSection";
 import FooterSection from "./components/FooterSection";
 import TestAddToCart from "./components/TestAddToCart";
 import TestAdminAccess from "./components/TestAdminAccess";
+import ProtectedRoute from "./components/ProtectedRoute";
+import DashboardRedirect from "./components/DashboardRedirect";
 
 import FoodCategorySection from "./components/FoodCategorySection";
 import AllDishesPage from "./components/AllDishesPage";
@@ -43,46 +45,6 @@ import TheChaatChaskaPage from "./components/TheChaatChaskaPage";
 import MomosHutPage from "./components/MomosHutPage";
 
 import "./App.css";
-
-// Protected Route Component for Role-based Access
-const ProtectedRoute = ({ children, requiredRole, fallbackPath = "/" }) => {
-  const { user, loading } = useAuth();
-  
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-  
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  if (requiredRole && user.role !== requiredRole) {
-    return <Navigate to={fallbackPath} replace />;
-  }
-  
-  return children;
-};
-
-// Role-based Dashboard Redirect Component
-const DashboardRedirect = () => {
-  const { user, loading } = useAuth();
-  
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-  
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  // Redirect based on user role
-  if (user.role === 'admin') {
-    return <Navigate to="/admin" replace />;
-  }
-  
-  // Default to regular dashboard for other roles
-  return <Navigate to="/dashboard" replace />;
-};
 
 function LandingPage() {
   return (

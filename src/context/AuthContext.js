@@ -49,11 +49,15 @@ export const AuthProvider = ({ children }) => {
     if (!token) return false;
 
     try {
-      const userData = await authAPI.getCurrentUser();
-      console.log('AuthContext - Token validated, user data:', userData);
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
-      return true;
+      // For testing, just get user from localStorage
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        const parsedUser = JSON.parse(userData);
+        console.log('AuthContext - Mock token validated, user data:', parsedUser);
+        setUser(parsedUser);
+        return true;
+      }
+      return false;
     } catch (error) {
       console.error('AuthContext - Token validation failed:', error);
       localStorage.removeItem('user');
