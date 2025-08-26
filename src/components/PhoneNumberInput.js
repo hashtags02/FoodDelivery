@@ -17,12 +17,6 @@ const PhoneNumberInput = ({ onSuccess, onBack }) => {
   const recaptchaContainerRef = useRef(null);
 
   const { 
-    checkPhoneNumber, 
-    sendLoginOTP, 
-    sendRegistrationOTP, 
-    verifyLoginOTP, 
-    verifyRegistrationOTP,
-    isExistingUser,
     resetOTPState 
   } = useAuth();
 
@@ -47,40 +41,17 @@ const PhoneNumberInput = ({ onSuccess, onBack }) => {
       // Format phone number for Firebase (add +91 for India)
       const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+91${phoneNumber}`;
       
-      console.log('Checking phone number:', phoneNumber);
-      console.log('Formatted phone for Firebase:', formattedPhone);
+      console.log('Sending OTP to:', formattedPhone);
       
-      // Check if phone number is registered
-      const checkResult = await checkPhoneNumber(phoneNumber);
-      
-      console.log('Phone check result:', checkResult);
-      
-      if (checkResult.success) {
-        if (checkResult.isRegistered) {
-          console.log('User exists - proceeding to login OTP');
-          // User exists, send login OTP via Firebase
-          const otpResult = await firebaseOTPService.sendOTP(formattedPhone, 'recaptcha-container');
-          if (otpResult.success) {
-            // Store confirmation result globally for OTP verification
-            window.confirmationResult = firebaseOTPService.confirmationResult;
-            setStep('otp');
-          } else {
-            setError(otpResult.error || 'Failed to send OTP');
-          }
-        } else {
-          console.log('New user - proceeding to user details');
-          // New user, send registration OTP via Firebase
-          const otpResult = await firebaseOTPService.sendOTP(formattedPhone, 'recaptcha-container');
-          if (otpResult.success) {
-            // Store confirmation result globally for OTP verification
-            window.confirmationResult = firebaseOTPService.confirmationResult;
-            setStep('userDetails');
-          } else {
-            setError(otpResult.error || 'Failed to send OTP');
-          }
-        }
+      // Send OTP via Firebase
+      const otpResult = await firebaseOTPService.sendOTP(formattedPhone, 'recaptcha-container');
+      if (otpResult.success) {
+        // Store confirmation result globally for OTP verification
+        window.confirmationResult = firebaseOTPService.confirmationResult;
+        // For testing, always go to user details first
+        setStep('userDetails');
       } else {
-        setError(checkResult.error || 'Failed to check phone number');
+        setError(otpResult.error || 'Failed to send OTP');
       }
     } catch (error) {
       console.error('Phone submit error:', error);
@@ -101,53 +72,28 @@ const PhoneNumberInput = ({ onSuccess, onBack }) => {
     setError('');
 
     try {
-      let result;
-      
-      // Debug logging
-      console.log('OTP Verification - isExistingUser:', isExistingUser);
-      console.log('OTP Verification - phoneNumber:', phoneNumber);
-      console.log('OTP Verification - userDetails:', userDetails);
-      
-      if (isExistingUser) {
-        console.log('Processing as existing user login...');
-        // Verify login OTP via Firebase
-        const firebaseResult = await firebaseOTPService.verifyOTP(otp);
-        if (firebaseResult.success) {
-          // Get Firebase ID token
-          const idToken = await firebaseResult.user.getIdToken();
-          console.log('Firebase ID token obtained for login');
-          
-          // Verify with backend using ID token
-          result = await verifyLoginOTP(phoneNumber, idToken);
-        } else {
-          setError(firebaseResult.error || 'Invalid OTP');
-          setLoading(false);
-          return;
-        }
-      } else {
-        console.log('Processing as new user registration...');
-        // Verify registration OTP via Firebase
-        const firebaseResult = await firebaseOTPService.verifyOTP(otp);
-        if (firebaseResult.success) {
-          // Get Firebase ID token
-          const idToken = await firebaseResult.user.getIdToken();
-          console.log('Firebase ID token obtained for registration');
-          
-          // Register user with backend using ID token
-          result = await verifyRegistrationOTP(phoneNumber, idToken, userDetails);
-        } else {
-          setError(firebaseResult.error || 'Invalid OTP');
-          setLoading(false);
-          return;
-        }
-      }
+      // Verify OTP via Firebase
+      const firebaseResult = await firebaseOTPService.verifyOTP(otp);
+      if (firebaseResult.success) {
+        // Create a mock user object for testing
+        const mockUser = {
+          id: 'user_' + Date.now(),
+          phone: phoneNumber,
+          name: userDetails.name || 'User',
+          email: userDetails.email || '',
+          role: 'user', // Default role
+          isPhoneVerified: true
+        };
 
-      if (result.success) {
+        // Store user in localStorage for testing
+        localStorage.setItem('user', JSON.stringify(mockUser));
+        localStorage.setItem('jwt_token', 'mock_token_' + Date.now());
+
         resetOTPState();
         firebaseOTPService.clearRecaptcha();
-        onSuccess(result.user);
+        onSuccess(mockUser);
       } else {
-        setError(result.error || 'Authentication failed');
+        setError(firebaseResult.error || 'Invalid OTP');
       }
     } catch (error) {
       console.error('OTP verification error:', error);
@@ -202,26 +148,32 @@ const PhoneNumberInput = ({ onSuccess, onBack }) => {
         <h2>Welcome to CraveCart</h2>
         <p>Enter your phone number to continue</p>
         
-        <form onSubmit={handlePhoneSubmit}>
+        <form onSubmit={handlePhoneSubmit} className="phone-form">
           <div className="input-group">
+            <label htmlFor="phone">Phone Number</label>
             <input
               type="tel"
-              placeholder="Phone Number"
+              id="phone"
               value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
-              disabled={loading}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              placeholder="Enter your phone number"
+              className="phone-input"
               required
             />
           </div>
           
           {error && <div className="error-message">{error}</div>}
           
-          <button type="submit" disabled={loading} className="primary-button">
-            {loading ? 'Checking...' : 'Continue'}
+          <button 
+            type="submit" 
+            className="submit-btn"
+            disabled={loading}
+          >
+            {loading ? 'Sending OTP...' : 'Send OTP'}
           </button>
         </form>
-        
-        {/* Hidden reCAPTCHA container */}
+
+        {/* reCAPTCHA container */}
         <div id="recaptcha-container" ref={recaptchaContainerRef}></div>
       </div>
     );
@@ -229,36 +181,45 @@ const PhoneNumberInput = ({ onSuccess, onBack }) => {
 
   if (step === 'userDetails') {
     return (
-      <div className="phone-input-container">
+      <div className="user-details-container">
         <h2>Complete Your Profile</h2>
-        <p>Please provide your details to complete registration</p>
+        <p>Please provide your details to continue</p>
         
-        <form onSubmit={handleUserDetailsSubmit}>
+        <form onSubmit={handleUserDetailsSubmit} className="user-details-form">
           <div className="input-group">
+            <label htmlFor="name">Full Name *</label>
             <input
               type="text"
-              placeholder="Full Name"
+              id="name"
               value={userDetails.name}
               onChange={(e) => setUserDetails({...userDetails, name: e.target.value})}
+              placeholder="Enter your full name"
+              className="input-field"
               required
             />
           </div>
           
           <div className="input-group">
+            <label htmlFor="email">Email Address *</label>
             <input
               type="email"
-              placeholder="Email Address"
+              id="email"
               value={userDetails.email}
               onChange={(e) => setUserDetails({...userDetails, email: e.target.value})}
+              placeholder="Enter your email address"
+              className="input-field"
               required
             />
           </div>
           
           <div className="input-group">
+            <label htmlFor="address">Address (Optional)</label>
             <textarea
-              placeholder="Delivery Address (Optional)"
+              id="address"
               value={userDetails.address}
               onChange={(e) => setUserDetails({...userDetails, address: e.target.value})}
+              placeholder="Enter your address"
+              className="input-field"
               rows="3"
             />
           </div>
@@ -266,10 +227,17 @@ const PhoneNumberInput = ({ onSuccess, onBack }) => {
           {error && <div className="error-message">{error}</div>}
           
           <div className="button-group">
-            <button type="button" onClick={handleBack} className="secondary-button">
-              Back
+            <button 
+              type="button" 
+              className="back-btn"
+              onClick={handleBack}
+            >
+              ← Back
             </button>
-            <button type="submit" className="primary-button">
+            <button 
+              type="submit" 
+              className="submit-btn"
+            >
               Continue
             </button>
           </div>
@@ -280,19 +248,21 @@ const PhoneNumberInput = ({ onSuccess, onBack }) => {
 
   if (step === 'otp') {
     return (
-      <div className="phone-input-container">
-        <h2>Verify OTP</h2>
-        <p>Enter the 6-digit code sent to {phoneNumber}</p>
+      <div className="otp-container">
+        <h2>Enter OTP</h2>
+        <p>We've sent a 6-digit code to {phoneNumber}</p>
         
-        <form onSubmit={handleOTPSubmit}>
+        <form onSubmit={handleOTPSubmit} className="otp-form">
           <div className="input-group">
+            <label htmlFor="otp">OTP Code</label>
             <input
               type="text"
-              placeholder="Enter OTP"
+              id="otp"
               value={otp}
-              onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              onChange={(e) => setOtp(e.target.value)}
+              placeholder="Enter 6-digit OTP"
+              className="otp-input"
               maxLength="6"
-              disabled={loading}
               required
             />
           </div>
@@ -300,21 +270,34 @@ const PhoneNumberInput = ({ onSuccess, onBack }) => {
           {error && <div className="error-message">{error}</div>}
           
           <div className="button-group">
-            <button type="button" onClick={handleBack} className="secondary-button">
-              Back
+            <button 
+              type="button" 
+              className="back-btn"
+              onClick={handleBack}
+            >
+              ← Back
             </button>
-            <button type="submit" disabled={loading} className="primary-button">
+            <button 
+              type="submit" 
+              className="submit-btn"
+              disabled={loading}
+            >
               {loading ? 'Verifying...' : 'Verify OTP'}
             </button>
           </div>
-          
-          <div className="resend-section">
-            <p>Didn't receive the code?</p>
-            <button type="button" onClick={resendOTP} disabled={loading} className="resend-button">
-              Resend OTP
-            </button>
-          </div>
         </form>
+        
+        <div className="resend-section">
+          <p>Didn't receive the code?</p>
+          <button 
+            type="button" 
+            className="resend-btn"
+            onClick={resendOTP}
+            disabled={loading}
+          >
+            Resend OTP
+          </button>
+        </div>
       </div>
     );
   }
