@@ -188,6 +188,10 @@ export const ordersAPI = {
     method: 'PUT',
     body: JSON.stringify({ status }),
   }),
+  // Restaurant marks an order as ready for pickup (emits order_ready_for_pickup)
+  markReadyForPickup: (id) => apiRequest(`/orders/${id}/ready-for-pickup`, {
+    method: 'POST',
+  }),
   getAvailable: () => apiRequest('/orders/available/list'),
   assign: (id) => apiRequest(`/orders/${id}/assign`, { method: 'POST' }),
   acceptByRestaurant: (id) => apiRequest(`/orders/${id}/accept-restaurant`, { method: 'POST' }),
